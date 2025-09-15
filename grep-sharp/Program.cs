@@ -8,7 +8,7 @@ for(int i = 0; i < args.Length; i++)
     {
         var option = args[i].TrimStart('-');
         var value = (i + 1 < args.Length && !args[i + 1].StartsWith("-")) ? args[++i] : "true";
-        options[option] = value.ToUpper();
+        options[option.ToUpper()] = value;
     }
     else
     {
@@ -26,3 +26,7 @@ foreach(var token in tokens)
 {
     Console.WriteLine($"{token}");
 }
+
+var rpnOut = ReRPN.InfixToPostfix(tokens);
+
+Console.WriteLine(rpnOut);

@@ -1,9 +1,11 @@
 ﻿namespace grep_sharp.Parser
 {
     internal static class Tokenizer
-    {//TODO handle quantifiers
+    {
+    //TODO handle anchors explicitly
         public static List<Token> Tokenize(string pattern)
         {
+            int bStart = 0;
             var tokens = new List<Token>();
             var chars = pattern.AsSpan();
             for (int i = 0; i < pattern.Length; i++)
@@ -28,9 +30,24 @@
                         break;
 
                     case '[':
-                        int start = i;
+                        bStart = i;
                         while (i < chars.Length && chars[i] != ']') i++;
-                        tokens.Add(new Token(TokenType.CharClass, chars.Slice(start, i - start + 1).ToString()));
+                        tokens.Add(new Token(TokenType.CharClass, chars.Slice(bStart, i - bStart + 1).ToString()));
+                        break;
+
+                    case '{':
+                        bStart = i;
+                        while(i < chars.Length && chars[i] != '}')
+                        {
+                            if (chars[i] == ',')
+                            {
+                                i++;
+                                continue;
+                            }
+                            if (chars[i] <= '0' && chars[i] >= '9') throw new ArgumentException("Invalid digit");
+                            i++;
+                        }
+                        tokens.Add(new Token(TokenType.Quantifier, chars.Slice(bStart, 1 - bStart + 1).ToString()));
                         break;
 
                     case '\\':
@@ -85,6 +102,7 @@
         GroupClose,     // )
         AnchorStart,    // ^
         AnchorEnd,      // $
+        Quantifier,     // {,}
         End
     } 
 
