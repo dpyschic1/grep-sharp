@@ -1,4 +1,6 @@
-﻿var options = new Dictionary<string, string>();
+﻿using grep_sharp.Parser;
+
+var options = new Dictionary<string, string>();
 string input = string.Empty;
 for(int i = 0; i < args.Length; i++)
 {
@@ -19,4 +21,8 @@ if (!options.TryGetValue("E", out var pattern))
     Console.WriteLine("Pattern string not provided");
 }
 
-
+var tokens = Tokenizer.Tokenize(pattern);
+foreach(var token in tokens)
+{
+    Console.WriteLine($"{token}");
+}
