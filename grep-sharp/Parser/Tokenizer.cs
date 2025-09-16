@@ -24,9 +24,12 @@
                     case '*':
                     case '+':
                     case '?':
-                    case '|':
                     case '.':
                         tokens.Add(new Token(TokenType.Operator, c.ToString()));
+                        break;
+
+                    case '|':
+                        tokens.Add(new Token(TokenType.Alternation, c.ToString()));
                         break;
 
                     case '[':
@@ -97,12 +100,13 @@
     {
         Literal,        // a single character or escaped literal
         CharClass,      // [abc], [a-z], \d, etc.
-        Operator,       // *, +, ?, |, .
+        Operator,       // *, +, ?, .
         GroupOpen,      // (
         GroupClose,     // )
         AnchorStart,    // ^
         AnchorEnd,      // $
         Quantifier,     // {,}
+        Alternation,    // |
         End
     } 
 

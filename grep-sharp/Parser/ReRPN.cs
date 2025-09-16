@@ -60,10 +60,15 @@ namespace grep_sharp.Parser
                         outBuff.Append(token.Value);
                         break;
 
+                    case TokenType.Alternation:
+                        if (natom == 0) throw new ArgumentException("empty alternation");
+                        while (--natom > 0) outBuff.Append('.');
+                        nalt++;
+                        break;
 
                     case TokenType.End:
                         while (--natom > 0) outBuff.Append('.');
-                        for(; natom > 0; natom--) outBuff.Append('|');
+                        for(; nalt > 0; nalt--) outBuff.Append('|');
                         break;
 
                     default: throw new NotImplementedException();

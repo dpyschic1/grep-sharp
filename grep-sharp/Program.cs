@@ -1,4 +1,5 @@
-﻿using grep_sharp.Parser;
+﻿using grep_sharp.Matcher;
+using grep_sharp.Parser;
 
 var options = new Dictionary<string, string>();
 string input = string.Empty;
@@ -28,5 +29,10 @@ foreach(var token in tokens)
 }
 
 var rpnOut = ReRPN.InfixToPostfix(tokens);
+var rematch = new ReMatch();
+var stateOut = rematch.Post2NFA(rpnOut);
+
+Console.WriteLine(GraphvizVisualizer.GenerateDot(stateOut));
+
 
 Console.WriteLine(rpnOut);
