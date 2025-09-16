@@ -54,6 +54,13 @@ namespace grep_sharp.Parser
                         natom++;
                         break;
 
+                    case TokenType.Quantifier:
+                        if (natom == 0)
+                            throw new ArgumentException("Quantifiers not attached with anything");
+                        outBuff.Append(token.Value);
+                        break;
+
+
                     case TokenType.End:
                         while (--natom > 0) outBuff.Append('.');
                         for(; natom > 0; natom--) outBuff.Append('|');

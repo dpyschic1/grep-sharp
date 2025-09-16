@@ -47,7 +47,7 @@
                             if (chars[i] <= '0' && chars[i] >= '9') throw new ArgumentException("Invalid digit");
                             i++;
                         }
-                        tokens.Add(new Token(TokenType.Quantifier, chars.Slice(bStart, 1 - bStart + 1).ToString()));
+                        tokens.Add(new Token(TokenType.Quantifier, chars.Slice(bStart, i - bStart + 1).ToString()));
                         break;
 
                     case '\\':
