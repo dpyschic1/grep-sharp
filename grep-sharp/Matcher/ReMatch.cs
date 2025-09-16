@@ -1,15 +1,14 @@
 ﻿namespace grep_sharp.Matcher
 {
-    internal class ReMatch
+    public static class NFABuilder
     {
-        private int currentGeneration = 0;
-        public State Post2NFA(string postFixPattern)
+        //TODO: Anchors and char classes
+        public static State Post2NFA(string postFixPattern)
         {
             var fragStack = new Stack<Frag>();
             for (int i = 0; i < postFixPattern.Length; i++)
             {
                 char c = postFixPattern[i];
-                currentGeneration++;
                 switch (c)
                 {
                     case '|':
@@ -43,7 +42,7 @@
 
         }
 
-        private Frag BuildAlternation(Frag right, Frag left)
+        private static Frag BuildAlternation(Frag right, Frag left)
         {
             var splitState = new State { Type = StateType.Split, Out1 = left.start, Out2 = right.start };
             return new Frag
@@ -53,7 +52,7 @@
             };
         }
 
-        private Frag BuildStar(Frag frag)
+        private static Frag BuildStar(Frag frag)
         {
             var splitState = new State { Type = StateType.Split, Out1 = frag.start, Out2 = null };
             foreach (var action in frag.DanglingAction) action(splitState);
@@ -64,7 +63,7 @@
             };
         }
 
-        private Frag BuildConcatenation(Frag right, Frag left)
+        private static Frag BuildConcatenation(Frag right, Frag left)
         {
             foreach (var action in left.DanglingAction) action(right.start);
 
@@ -75,7 +74,7 @@
             };
         }
 
-        private Frag BuildLiteral(char c)
+        private static Frag BuildLiteral(char c)
         {
             var state = new State {Type = StateType.Char , Character = c };
             return new Frag
@@ -85,7 +84,7 @@
             };
         }
 
-        private Frag BuildPlus(Frag frag)
+        private static Frag BuildPlus(Frag frag)
         {
             var splitState = new State { Type = StateType.Split, Out1 = frag.start, Out2 = null };
             foreach (var action in frag.DanglingAction) action(splitState);
@@ -97,7 +96,7 @@
             };
         }
 
-        private Frag BuildQuestion(Frag frag)
+        private static Frag BuildQuestion(Frag frag)
         {
             var splitState = new State { Type = StateType.Split, Out1 = frag.start, Out2 = null };
             var fragementDangling = frag.DanglingAction.ToList();

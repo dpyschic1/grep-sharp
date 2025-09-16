@@ -29,10 +29,9 @@ foreach(var token in tokens)
 }
 
 var rpnOut = ReRPN.InfixToPostfix(tokens);
-var rematch = new ReMatch();
-var stateOut = rematch.Post2NFA(rpnOut);
+var stateOut = NFABuilder.Post2NFA(rpnOut);
 
 Console.WriteLine(GraphvizVisualizer.GenerateDot(stateOut));
-
+// TODO: Build Execution engine for matching inputs.
 
 Console.WriteLine(rpnOut);
