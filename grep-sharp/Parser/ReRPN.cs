@@ -2,8 +2,10 @@
 
 namespace grep_sharp.Parser
 {
-    internal static class ReRPN
+    public static class ReRPN
     {
+        public const char CONCAT = (char)0xFFFF;
+        private const char WILDCARD = (char)0xFFFE;
         public static string InfixToPostfix(List<Token> tokens)
         {
             var outBuff = new StringBuilder();
@@ -20,7 +22,7 @@ namespace grep_sharp.Parser
                         if(natom > 1)
                         {
                             natom--;
-                            outBuff.Append('.');
+                            outBuff.Append(CONCAT);
                         }
 
                         outBuff.Append(token.Value);
@@ -33,11 +35,20 @@ namespace grep_sharp.Parser
                         outBuff.Append(token.Value);
                         break;
 
+                    case TokenType.WildCard:
+                        if(natom > 1)
+                        {
+                            natom--;
+                            outBuff.Append(CONCAT);
+                        }
+                        outBuff.Append(WILDCARD);
+                        break;
+
                     case TokenType.GroupOpen:
                         if (natom > 1)
                         {
                             natom--;
-                            outBuff.Append('.');
+                            outBuff.Append(CONCAT);
                         }
                         parenTrack.Push((nalt, natom));
                         nalt = natom = 0;
@@ -47,7 +58,7 @@ namespace grep_sharp.Parser
                         if (natom == 0)
                             throw new ArgumentException("Group is empty");
 
-                        while (--natom > 0) outBuff.Append('.');
+                        while (--natom > 0) outBuff.Append(CONCAT);
                         for (; nalt > 0; nalt--) outBuff.Append('|');
 
                         (nalt, natom) = parenTrack.Pop();
@@ -62,12 +73,12 @@ namespace grep_sharp.Parser
 
                     case TokenType.Alternation:
                         if (natom == 0) throw new ArgumentException("empty alternation");
-                        while (--natom > 0) outBuff.Append('.');
+                        while (--natom > 0) outBuff.Append(CONCAT);
                         nalt++;
                         break;
 
                     case TokenType.End:
-                        while (--natom > 0) outBuff.Append('.');
+                        while (--natom > 0) outBuff.Append(CONCAT);
                         for(; nalt > 0; nalt--) outBuff.Append('|');
                         break;
 

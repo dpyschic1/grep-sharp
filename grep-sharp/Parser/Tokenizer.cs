@@ -2,7 +2,7 @@
 {
     internal static class Tokenizer
     {
-    //TODO handle anchors explicitly
+        //TODO handle anchors explicitly
         public static List<Token> Tokenize(string pattern)
         {
             int bStart = 0;
@@ -21,10 +21,13 @@
                         tokens.Add(new Token(TokenType.GroupClose));
                         break;
 
+                    case '.':
+                        tokens.Add(new Token(TokenType.WildCard));
+                        break;
+
                     case '*':
                     case '+':
                     case '?':
-                    case '.':
                         tokens.Add(new Token(TokenType.Operator, c.ToString()));
                         break;
 
@@ -100,13 +103,14 @@
     {
         Literal,        // a single character or escaped literal
         CharClass,      // [abc], [a-z], \d, etc.
-        Operator,       // *, +, ?, .
+        Operator,       // *, +, ?
         GroupOpen,      // (
         GroupClose,     // )
         AnchorStart,    // ^
         AnchorEnd,      // $
         Quantifier,     // {,}
         Alternation,    // |
+        WildCard,
         End
     } 
 

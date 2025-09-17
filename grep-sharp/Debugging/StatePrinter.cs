@@ -31,9 +31,10 @@ public static class GraphvizVisualizer
 
         string label = s.Type switch
         {
-            StateType.Char => s.Character.ToString(),
+            StateType.Char => EscapeForDot(s.Character.ToString()),
             StateType.Split => "ε",
             StateType.Match => "MATCH",
+            StateType.CharSet => FormatCharSet(s.CharacterSet),
             _ => "?"
         };
 
@@ -56,6 +57,17 @@ public static class GraphvizVisualizer
 
         GenerateDotEdges(s.Out1, visited, sb);
         GenerateDotEdges(s.Out2, visited, sb);
+    }
+    private static string FormatCharSet(CharacterSet charSet)
+    {
+        if (charSet == null) return "[]";
+
+        string prefix = charSet.IsNegated ? "[^" : "[";
+        return $"{prefix}...]";
+    }
+    private static string EscapeForDot(string str)
+    {
+        return str.Replace("\"", "\\\"").Replace("\\", "\\\\");
     }
 
     private static string GetStateId(State s) => $"s{s.GetHashCode():X}";
