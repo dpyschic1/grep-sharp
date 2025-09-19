@@ -1,11 +1,9 @@
 ﻿using System.Text;
-
+using static grep_sharp.Constants;
 namespace grep_sharp.Parser
 {
     public static class ReRPN
     {
-        public const char CONCAT = (char)0xFFFF;
-        private const char WILDCARD = (char)0xFFFE;
         public static string InfixToPostfix(List<Token> tokens)
         {
             var outBuff = new StringBuilder();
@@ -29,6 +27,7 @@ namespace grep_sharp.Parser
                         natom++;
                         break;
 
+                    case TokenType.Quantifier:
                     case TokenType.Operator:
                         if (natom == 0)
                             throw new ArgumentException("No operands to perform the operation on");
@@ -63,12 +62,6 @@ namespace grep_sharp.Parser
 
                         (nalt, natom) = parenTrack.Pop();
                         natom++;
-                        break;
-
-                    case TokenType.Quantifier:
-                        if (natom == 0)
-                            throw new ArgumentException("Quantifiers not attached with anything");
-                        outBuff.Append(token.Value);
                         break;
 
                     case TokenType.Alternation:

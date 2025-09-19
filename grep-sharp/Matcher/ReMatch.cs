@@ -1,12 +1,10 @@
 ﻿using System.Collections;
-
+using static grep_sharp.Constants;
 namespace grep_sharp.Matcher
 {
     public static class NFABuilder
     {
-        public const char CONCAT = (char)0xFFFF;
         //TODO: Anchors
-        //TODO: handle quantifiers
         public static State Post2NFA(string postFixPattern)
         {
             var fragStack = new Stack<Frag>();
@@ -35,6 +33,12 @@ namespace grep_sharp.Matcher
                         var charSet = ParseCharacterClass(postFixPattern.Substring(i + 1, end - i - 1));
                         fragStack.Push(BuildCharacterSet(charSet));
                         i = end;
+                        break;
+                    case '{':
+                        int closeBrace = postFixPattern.IndexOf('}', i);
+                        string quantStr = postFixPattern.Substring(i, closeBrace - i + 1);
+                        fragStack.Push(BuildQuantifier(fragStack.Pop(), quantStr));
+                        i = closeBrace;
                         break;
                     default:
                         fragStack.Push(BuildLiteral(c));
@@ -128,6 +132,37 @@ namespace grep_sharp.Matcher
             };
         }
 
+        private static Frag BuildQuantifier(Frag frag, string quantifier)
+        {
+            var content = quantifier.Substring(1, quantifier.Length - 2);
+            var parts = content.Split(',');
+
+            int min = int.Parse(parts[0]);
+            int max = parts.Length > 1 && !string.IsNullOrEmpty(parts[1]) ? int.Parse(parts[1]) : -1;
+
+            Frag result = null;
+
+            for(int i = 0; i < min; i++)
+            {
+                result = result == null ? frag : BuildConcatenation(frag, result);
+            }
+
+            if(max == -1)
+            {
+                var star = BuildStar(frag);
+                result = result == null ? star : BuildConcatenation(star, result);
+            }
+            else
+            {
+                for (int i = min; i < max; i++)
+                {
+                    var optional = BuildQuestion(frag);
+                    result = result == null ? optional : BuildConcatenation(optional, result);
+                }
+            }
+            return result;
+        }
+
         private static CharacterSet ParseCharacterClass(string cClass)
         {
             var charSet = new CharacterSet();
@@ -164,6 +199,8 @@ namespace grep_sharp.Matcher
         public CharacterSet CharacterSet;
         public State Out1;
         public State Out2;
+        public int MinCount;
+        public int MaxCount;
     }
 
     public class Frag
@@ -192,5 +229,5 @@ namespace grep_sharp.Matcher
         }
     }
 
-    public enum StateType { Char, Split, Match, CharSet };
+    public enum StateType { Char, Split, Match, CharSet, Quantifier };
 }

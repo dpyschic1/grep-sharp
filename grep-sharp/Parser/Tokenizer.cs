@@ -1,6 +1,6 @@
 ﻿namespace grep_sharp.Parser
 {
-    internal static class Tokenizer
+    public static class Tokenizer
     {
         //TODO handle anchors explicitly
         public static List<Token> Tokenize(string pattern)
@@ -43,6 +43,7 @@
 
                     case '{':
                         bStart = i;
+                        i++;
                         while(i < chars.Length && chars[i] != '}')
                         {
                             if (chars[i] == ',')
@@ -50,7 +51,7 @@
                                 i++;
                                 continue;
                             }
-                            if (chars[i] <= '0' && chars[i] >= '9') throw new ArgumentException("Invalid digit");
+                            if (chars[i] < '0' || chars[i] > '9') throw new ArgumentException("Invalid digit");
                             i++;
                         }
                         tokens.Add(new Token(TokenType.Quantifier, chars.Slice(bStart, i - bStart + 1).ToString()));
@@ -83,6 +84,66 @@
             return tokens;
         }
 
+        public static List<Token> ExpandQuantifierTokens(List<Token> tokens)
+        {
+            var result = new List<Token>();
+            var tokenList = tokens.ToList();
+
+            for (int i = 0; i < tokenList.Count; i++)
+            {
+                var token = tokenList[i];
+
+                if (token.Type != TokenType.Quantifier) { result.Add(token); continue; }
+
+                if (result.Count == 0) throw new ArgumentException("Quantifier must follow a token");
+
+                int atomStart = result.Count - 1;
+                if (result[atomStart].Type == TokenType.GroupClose)
+                {
+                    int depth = 1;
+                    atomStart--;
+                    while (atomStart >= 0 && depth > 0)
+                    {
+                        if (result[atomStart].Type == TokenType.GroupClose) depth++;
+                        else if (result[atomStart].Type == TokenType.GroupOpen) depth--;
+                        atomStart--;
+                    }
+                    atomStart++;
+                }
+
+                var atom = result.Skip(atomStart).ToList();
+
+                var content = token.Value[1..^1];
+                var parts = content.Split(',');
+                int min = int.Parse(parts[0]);
+                int max = parts.Length > 1 && !string.IsNullOrEmpty(parts[1]) ? int.Parse(parts[1]) : -1;
+
+                var expanded = new List<Token>();
+
+                for (int j = 0; j < min; j++)
+                    expanded.AddRange(atom);
+
+                if(max == -1)
+                {
+                    expanded.AddRange(atom);
+                    expanded.Add(new Token(TokenType.Operator, "*"));
+                }
+                else
+                {
+                    int optionalCount = max - min;
+                    for(int j = 0;j < optionalCount; j++)
+                    {
+                        expanded.AddRange(atom);
+                        expanded.Add(new Token(TokenType.Operator, "?"));
+                    }
+                }
+
+                result.RemoveRange(atomStart, result.Count - atomStart);
+                result.AddRange(expanded);
+            }
+
+            return result;
+        }
     }
 
     public readonly struct Token

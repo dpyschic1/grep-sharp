@@ -23,14 +23,46 @@ if (!options.TryGetValue("E", out var pattern))
 }
 
 var tokens = Tokenizer.Tokenize(pattern);
-foreach(var token in tokens)
+var exapndedTokens = Tokenizer.ExpandQuantifierTokens(tokens);
+
+
+Console.WriteLine("Original Tokens:");
+foreach (var token in tokens)
 {
-    Console.WriteLine($"{token}");
+    Console.Write($"{{ {token} }}\t");
 }
 
-var rpnOut = ReRPN.InfixToPostfix(tokens);
-var stateOut = NFABuilder.Post2NFA(rpnOut);
+Console.Write("\n\nExpanded Tokens:");
+foreach(var token in exapndedTokens)
+{
+    Console.Write($"{{ {token} }}\t");
+}
 
+
+var rpnOut = ReRPN.InfixToPostfix(tokens);
+
+Console.WriteLine("Original Postfix: {0}", rpnOut);
+
+var rpnOutExp = ReRPN.InfixToPostfix(exapndedTokens);
+
+Console.WriteLine("Expanded Postfix: {0}", rpnOutExp);
+
+var stateOut = NFABuilder.Post2NFA(rpnOutExp);
+void Walk(State s, HashSet<State> visited)
+{
+    if (s == null || visited.Contains(s)) return;
+    visited.Add(s);
+    Console.Write($"{s.Type} {(s.Type == StateType.Char ? s.Character.ToString() : "")}-->");
+    Walk(s.Out1, visited);
+    Walk(s.Out2, visited);
+}
+
+Console.WriteLine("WalkStarted:");
+
+
+Walk(stateOut, new HashSet<State>());
+
+Console.WriteLine("Walk Ended");
 Console.WriteLine(GraphvizVisualizer.GenerateDot(stateOut));
 // TODO: Build Execution engine for matching inputs.
 
