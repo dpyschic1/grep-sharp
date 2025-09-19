@@ -34,18 +34,10 @@ namespace grep_sharp.Matcher
                         fragStack.Push(BuildCharacterSet(charSet));
                         i = end;
                         break;
-                    case '{':
-                        int closeBrace = postFixPattern.IndexOf('}', i);
-                        string quantStr = postFixPattern.Substring(i, closeBrace - i + 1);
-                        fragStack.Push(BuildQuantifier(fragStack.Pop(), quantStr));
-                        i = closeBrace;
-                        break;
                     default:
                         fragStack.Push(BuildLiteral(c));
                         break;
-                    
                 }
-
             }
             var finalFrag = fragStack.Pop();
             var matchState = new State() { Type = StateType.Match };
@@ -132,37 +124,6 @@ namespace grep_sharp.Matcher
             };
         }
 
-        private static Frag BuildQuantifier(Frag frag, string quantifier)
-        {
-            var content = quantifier.Substring(1, quantifier.Length - 2);
-            var parts = content.Split(',');
-
-            int min = int.Parse(parts[0]);
-            int max = parts.Length > 1 && !string.IsNullOrEmpty(parts[1]) ? int.Parse(parts[1]) : -1;
-
-            Frag result = null;
-
-            for(int i = 0; i < min; i++)
-            {
-                result = result == null ? frag : BuildConcatenation(frag, result);
-            }
-
-            if(max == -1)
-            {
-                var star = BuildStar(frag);
-                result = result == null ? star : BuildConcatenation(star, result);
-            }
-            else
-            {
-                for (int i = min; i < max; i++)
-                {
-                    var optional = BuildQuestion(frag);
-                    result = result == null ? optional : BuildConcatenation(optional, result);
-                }
-            }
-            return result;
-        }
-
         private static CharacterSet ParseCharacterClass(string cClass)
         {
             var charSet = new CharacterSet();
@@ -182,25 +143,11 @@ namespace grep_sharp.Matcher
                         i += 2;
                     }
                 }
-                else
-                {
-                    charSet.Add(cClass[i]);
-                }
+                else charSet.Add(cClass[i]);
             }
 
             return charSet;
         }
-    }
-
-    public class State
-    {
-        public StateType Type;
-        public char Character;
-        public CharacterSet CharacterSet;
-        public State Out1;
-        public State Out2;
-        public int MinCount;
-        public int MaxCount;
     }
 
     public class Frag
@@ -208,26 +155,4 @@ namespace grep_sharp.Matcher
         public State start;
         public List<Action<State>> DanglingAction = new();
     }
-
-    public class CharacterSet
-    {
-        private readonly BitArray bits = new(128);
-        public bool IsNegated { get; set; }
-        public void Add(char c) => bits[c] = true;
-        public void AddRange(char start, char end)
-        {
-            for (char c = start; c <= end; c++)
-                bits[c] = true;
-        }
-
-        public bool Contains(char c)
-        {
-            if (c >= 128) return IsNegated;
-
-            bool inSet = bits[c];
-            return IsNegated ? !inSet : inSet;
-        }
-    }
-
-    public enum StateType { Char, Split, Match, CharSet, Quantifier };
 }

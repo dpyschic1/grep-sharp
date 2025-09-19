@@ -48,22 +48,12 @@ var rpnOutExp = ReRPN.InfixToPostfix(exapndedTokens);
 Console.WriteLine("Expanded Postfix: {0}", rpnOutExp);
 
 var stateOut = NFABuilder.Post2NFA(rpnOutExp);
-void Walk(State s, HashSet<State> visited)
-{
-    if (s == null || visited.Contains(s)) return;
-    visited.Add(s);
-    Console.Write($"{s.Type} {(s.Type == StateType.Char ? s.Character.ToString() : "")}-->");
-    Walk(s.Out1, visited);
-    Walk(s.Out2, visited);
-}
 
-Console.WriteLine("WalkStarted:");
-
-
-Walk(stateOut, new HashSet<State>());
-
-Console.WriteLine("Walk Ended");
 Console.WriteLine(GraphvizVisualizer.GenerateDot(stateOut));
 // TODO: Build Execution engine for matching inputs.
 
 Console.WriteLine(rpnOut);
+
+var isMatched = ReMatch.NFA2Match(input, stateOut);
+
+Console.WriteLine($"{isMatched}");
