@@ -1,4 +1,4 @@
-﻿namespace grep_sharp.Parser
+﻿namespace grep_sharp.Compilation.Tokenization
 {
     public static class Tokenizer
     {
@@ -13,6 +13,14 @@
                 char c = chars[i];
                 switch (c)
                 {
+                    case '^':
+                        tokens.Add(new Token(TokenType.AnchorStart));
+                        break;
+
+                    case '$':
+                        tokens.Add(new Token(TokenType.AnchorEnd));
+                        break;
+
                     case '(':
                         tokens.Add(new Token(TokenType.GroupOpen));
                         break;
@@ -144,35 +152,6 @@
 
             return result;
         }
+
     }
-
-    public readonly struct Token
-    {
-        public TokenType Type { get; }
-        public string Value { get; }
-
-        public Token(TokenType type, string value = "")
-        {
-            Type = type;
-            Value = value;
-        }
-
-        public override string ToString() => $"{Type}: {Value}";
-    }
-
-    public enum TokenType
-    {
-        Literal,        // a single character or escaped literal
-        CharClass,      // [abc], [a-z], \d, etc.
-        Operator,       // *, +, ?
-        GroupOpen,      // (
-        GroupClose,     // )
-        AnchorStart,    // ^
-        AnchorEnd,      // $
-        Quantifier,     // {,}
-        Alternation,    // |
-        WildCard,
-        End
-    } 
-
 }

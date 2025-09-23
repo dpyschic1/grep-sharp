@@ -1,66 +1,94 @@
-﻿using System;
+﻿using grep_sharp.Compilation.NFAConstruction;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace grep_sharp.Matcher
 {
     public static class ReMatch
     {
         private static int listId = 0;
+
+        public static bool DFAMatch(string input, State NFA)
+        {
+            var startList = StartList(NFA);
+            var current = DStateCache.GetOrCreate(startList);
+
+            foreach( char c in input )
+            {
+                current = GetNextState(current, c);
+                if(current == null) return false;
+            }
+
+            return current.IsMatch;
+        }
+
         public static bool NFA2Match(string input, State NFA)
         {
-            var l1 = new StateList(1024);
-            var l2 = new StateList(1024);
-            var clist = StartList(NFA, l1);
-            var nlist = l2;
+            listId = 0;
+            var clist = StartList(NFA);
+            var nlist = new List<State>();
 
             foreach (char c in input)
             {
                 Step(clist, nlist, c);
-                var tmp = clist;
-                clist = nlist;
-                nlist= tmp;
+                (nlist, clist) = (clist, nlist);
             }
 
-            for(int i = 0; i< clist.Count; i++)
+            foreach(var state in clist)
             {
-                if (clist.States[i].Type == StateType.Match) return true;
+                Console.WriteLine($"State type: {state.Type}");
+                if (state.Type == StateType.Match) return true;
             }
 
             return false;
         }
 
-        private static void Step(StateList clist, StateList nlist, char c)
+        private static DState? GetNextState(DState current, char c)
+        {
+            if (current.Next[c] != null) return current.Next[c];
+
+            var nextList = new List<State>();
+            Step(current.NFAStates, nextList, c);
+
+            if(nextList.Count == 0)
+            {
+                current.Next[c] = null;
+                return null;
+            }
+
+            var nextDState = DStateCache.GetOrCreate(nextList);
+
+            current.Next[c] = nextDState;
+            return nextDState;
+        }
+
+        private static void Step(List<State> clist, List<State> nlist, char c)
         {
             listId++;
-            nlist.Count = 0;
-            for (int i = 0; i < clist.Count; i++)
+            foreach(var state in clist)
             {
-                var s = clist.States[i];
-                switch (s.Type)
+                switch (state.Type)
                 {
                     case StateType.Char:
-                        if (s.Character == c) AddState(nlist, s.Out1); break;
+                        if (state.Character == c) AddState(nlist, state.Out1);
+                        break;
 
                     case StateType.CharSet:
-                        if (s.CharacterSet.Contains(c)) AddState(nlist, s.Out1);
+                        if (state.CharacterSet.Contains(c)) AddState(nlist, state.Out1);
                         break;
                     default: break;
                 }
             }
         }
 
-        private static StateList StartList(State state, StateList list)
+        private static List<State> StartList(State state)
         {
             listId++;
-            list.Count = 0;
-            AddState(list, state);
-            return list;
+            var stList = new List<State>();
+            AddState(stList, state);
+            return stList;
         }
 
-        private static void AddState(StateList list, State state)
+        private static void AddState(List<State> list, State state)
         {
             if (list == null || state.LastList == listId) return;
 
@@ -71,20 +99,8 @@ namespace grep_sharp.Matcher
                 AddState(list, state.Out2);
                 return;
             }
-
-            list.States[list.Count++] = state;
+            list.Add(state);
         }
-    }
 
-    public class StateList
-    {
-        public State[] States;
-        public int Count;
-
-        public StateList(int capacity)
-        {
-            States = new State[capacity];
-            Count = 0;
-        }
     }
 }

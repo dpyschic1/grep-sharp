@@ -1,21 +1,7 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections;
 
-namespace grep_sharp.Matcher
+namespace grep_sharp.Compilation.NFAConstruction
 {
-    public class State
-    {
-        public StateType Type;
-        public char Character;
-        public CharacterSet CharacterSet;
-        public State Out1;
-        public State Out2;
-        public int LastList;
-    }
     public class CharacterSet
     {
         private readonly BitArray bits = new(128);
@@ -35,6 +21,4 @@ namespace grep_sharp.Matcher
             return IsNegated ? !inSet : inSet;
         }
     }
-
-    public enum StateType { Char, Split, Match, CharSet };
 }

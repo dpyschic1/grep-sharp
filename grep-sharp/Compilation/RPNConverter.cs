@@ -1,8 +1,10 @@
-﻿using System.Text;
+﻿using grep_sharp.Compilation.Tokenization;
+using System.Text;
 using static grep_sharp.Constants;
-namespace grep_sharp.Parser
+
+namespace grep_sharp.Compilation
 {
-    public static class ReRPN
+    public static class RPNConverter
     {
         public static string InfixToPostfix(List<Token> tokens)
         {

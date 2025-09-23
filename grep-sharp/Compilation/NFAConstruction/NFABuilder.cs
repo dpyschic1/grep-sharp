@@ -1,13 +1,11 @@
-﻿using System.Collections;
-using static grep_sharp.Constants;
-namespace grep_sharp.Matcher
+﻿using static grep_sharp.Constants;
+namespace grep_sharp.Compilation.NFAConstruction
 {
     public static class NFABuilder
     {
-        //TODO: Anchors
-        public static State Post2NFA(string postFixPattern)
+        public static State Build(string postFixPattern)
         {
-            var fragStack = new Stack<Frag>();
+            var fragStack = new Stack<Fragement>();
             for (int i = 0; i < postFixPattern.Length; i++)
             {
                 char c = postFixPattern[i];
@@ -44,82 +42,82 @@ namespace grep_sharp.Matcher
 
             foreach (var action in finalFrag.DanglingAction) action(matchState);
 
-            return finalFrag.start;
+            return finalFrag.Start;
 
         }
 
-        private static Frag BuildAlternation(Frag right, Frag left)
+        private static Fragement BuildAlternation(Fragement right, Fragement left)
         {
-            var splitState = new State { Type = StateType.Split, Out1 = left.start, Out2 = right.start };
-            return new Frag
+            var splitState = new State { Type = StateType.Split, Out1 = left.Start, Out2 = right.Start };
+            return new Fragement
             {
-                start = splitState,
+                Start = splitState,
                 DanglingAction = left.DanglingAction.Concat(right.DanglingAction).ToList()
             };
         }
 
-        private static Frag BuildStar(Frag frag)
+        private static Fragement BuildStar(Fragement frag)
         {
-            var splitState = new State { Type = StateType.Split, Out1 = frag.start, Out2 = null };
+            var splitState = new State { Type = StateType.Split, Out1 = frag.Start, Out2 = null };
             foreach (var action in frag.DanglingAction) action(splitState);
-            return new Frag
+            return new Fragement
             {
-                start = splitState,
+                Start = splitState,
                 DanglingAction = { target => splitState.Out2 = target }
             };
         }
 
-        private static Frag BuildConcatenation(Frag right, Frag left)
+        private static Fragement BuildConcatenation(Fragement right, Fragement left)
         {
-            foreach (var action in left.DanglingAction) action(right.start);
+            foreach (var action in left.DanglingAction) action(right.Start);
 
-            return new Frag
+            return new Fragement
             {
-                start = left.start,
+                Start = left.Start,
                 DanglingAction = right.DanglingAction
             };
         }
 
-        private static Frag BuildLiteral(char c)
+        private static Fragement BuildLiteral(char c)
         {
             var state = new State {Type = StateType.Char , Character = c };
-            return new Frag
+            return new Fragement
             {
-                start = state,
+                Start = state,
                 DanglingAction = { target => state.Out1 = target }
             };
         }
 
-        private static Frag BuildPlus(Frag frag)
+        private static Fragement BuildPlus(Fragement frag)
         {
-            var splitState = new State { Type = StateType.Split, Out1 = frag.start, Out2 = null };
+            var splitState = new State { Type = StateType.Split, Out1 = frag.Start, Out2 = null };
             foreach (var action in frag.DanglingAction) action(splitState);
 
-            return new Frag
+            return new Fragement
             {
-                start = frag.start,
+                Start = frag.Start,
                 DanglingAction = { target => splitState.Out2 = target }
             };
         }
 
-        private static Frag BuildQuestion(Frag frag)
+        private static Fragement BuildQuestion(Fragement frag)
         {
-            var splitState = new State { Type = StateType.Split, Out1 = frag.start, Out2 = null };
+            var splitState = new State { Type = StateType.Split, Out1 = frag.Start, Out2 = null };
             var fragementDangling = frag.DanglingAction.ToList();
             fragementDangling.Add(target => splitState.Out2 = target);
-            return new Frag
+            return new Fragement
             {
-                start = splitState,
+                Start = splitState,
                 DanglingAction = fragementDangling
             };
         }
 
-        private static Frag BuildCharacterSet(CharacterSet cSet)
+        private static Fragement BuildCharacterSet(CharacterSet cSet)
         {
             var cClassState = new State { Type = StateType.CharSet, CharacterSet = cSet};
-            return new Frag
+            return new Fragement
             {
-                start = cClassState,
+                Start = cClassState,
                 DanglingAction = { target => cClassState.Out1 = target }
             };
         }
@@ -148,11 +146,5 @@ namespace grep_sharp.Matcher
 
             return charSet;
         }
-    }
-
-    public class Frag
-    {
-        public State start;
-        public List<Action<State>> DanglingAction = new();
     }
 }
