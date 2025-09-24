@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "grep-sharp": {
+      "commandName": "Project",
+      "commandLineArgs": "\"[^@]+@[^@]+\\.[^@]+\" some.txt -v"
+    }
+  }
+}

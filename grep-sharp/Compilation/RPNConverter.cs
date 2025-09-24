@@ -1,8 +1,10 @@
-﻿using System.Text;
+﻿using grep_sharp.Compilation.Tokenization;
+using System.Text;
 using static grep_sharp.Constants;
-namespace grep_sharp.Parser
+
+namespace grep_sharp.Compilation
 {
-    public static class ReRPN
+    public static class RPNConverter
     {
         public static string InfixToPostfix(List<Token> tokens)
         {
@@ -73,6 +75,26 @@ namespace grep_sharp.Parser
                     case TokenType.End:
                         while (--natom > 0) outBuff.Append(CONCAT);
                         for(; nalt > 0; nalt--) outBuff.Append('|');
+                        break;
+
+                    case TokenType.AnchorStart:
+                        if (natom > 1)
+                        {
+                            natom--;
+                            outBuff.Append(CONCAT);
+                        }
+                        outBuff.Append(ANCHORSTART);
+                        natom++;
+                        break;
+
+                    case TokenType.AnchorEnd:
+                        if (natom > 1)
+                        {
+                            natom--;
+                            outBuff.Append(CONCAT);
+                        }
+                        outBuff.Append(ANCHOREND);
+                        natom++;
                         break;
 
                     default: throw new NotImplementedException();

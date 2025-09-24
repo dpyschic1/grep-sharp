@@ -1,59 +1,57 @@
-﻿using grep_sharp.Matcher;
-using grep_sharp.Parser;
+﻿using grep_sharp.CommandLine;
+using grep_sharp.RegEngine;
 
-var options = new Dictionary<string, string>();
-string input = string.Empty;
-for(int i = 0; i < args.Length; i++)
+namespace grep_sharp;
+
+public static class Program
 {
-    if (args[i].StartsWith("-"))
+    public static async Task<int> Main(string[] args)
     {
-        var option = args[i].TrimStart('-');
-        var value = (i + 1 < args.Length && !args[i + 1].StartsWith("-")) ? args[++i] : "true";
-        options[option.ToUpper()] = value;
+        try
+        {
+            if (args.Length == 0 || args[0] == "-h" || args[0] == "--help")
+            {
+                CommandLineParser.ShowHelp();
+                return 0;
+            }
+
+            var options = CommandLineParser.Parse(args);
+
+            CommandLineHandler.ValidateOptions(options);
+
+            using var cts = new CancellationTokenSource();
+            SetupCancelHandler(cts);
+            return await Engine.RunAsync(options, cts.Token);
+        }
+        catch (ArgumentException ex)
+        {
+            Console.Error.WriteLine($"Error: {ex.Message}");
+            Console.Error.WriteLine("Use -h for help.");
+            return 1;
+        }
+        catch (FileNotFoundException ex)
+        {
+            Console.Error.WriteLine($"Error: {ex.Message}");
+            return 1;
+        }
+        catch (OperationCanceledException)
+        {
+            Console.Error.WriteLine("Operation cancelled.");
+            return 130;
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Unexpected error: {ex.Message}");
+            return 1;
+        }
     }
-    else
+    private static void SetupCancelHandler(CancellationTokenSource cts)
     {
-        input = args[i];
+        Console.CancelKeyPress += (s, e) =>
+        {
+            e.Cancel = true;
+            cts.Cancel();
+        };
     }
 }
-
-if (!options.TryGetValue("E", out var pattern))
-{
-    Console.WriteLine("Pattern string not provided");
-}
-
-var tokens = Tokenizer.Tokenize(pattern);
-var exapndedTokens = Tokenizer.ExpandQuantifierTokens(tokens);
-
-
-Console.WriteLine("Original Tokens:");
-foreach (var token in tokens)
-{
-    Console.Write($"{{ {token} }}\t");
-}
-
-Console.Write("\n\nExpanded Tokens:");
-foreach(var token in exapndedTokens)
-{
-    Console.Write($"{{ {token} }}\t");
-}
-
-
-var rpnOut = ReRPN.InfixToPostfix(tokens);
-
-Console.WriteLine("Original Postfix: {0}", rpnOut);
-
-var rpnOutExp = ReRPN.InfixToPostfix(exapndedTokens);
-
-Console.WriteLine("Expanded Postfix: {0}", rpnOutExp);
-
-var stateOut = NFABuilder.Post2NFA(rpnOutExp);
-
-Console.WriteLine(GraphvizVisualizer.GenerateDot(stateOut));
-// TODO: Build Execution engine for matching inputs.
-
-Console.WriteLine(rpnOut);
-
-var isMatched = ReMatch.NFA2Match(input, stateOut);
-
-Console.WriteLine($"{isMatched}");
+   
