@@ -10,6 +10,23 @@ namespace grep_sharp.RegEngine
         public static async Task<int> RunAsync(CommandLineOptions options,
             CancellationToken cancellationToken = default)
         {
+            if (IsSimpleLiteral(options.Pattern))
+            {
+                if(options.Verbose)
+                    Console.Error.WriteLine("Strategy: Fast path (literal string matching)");
+
+                if (!string.IsNullOrEmpty(options.FilePath))
+                {
+                    return await ProcessFileWithFastPath(options, cancellationToken);
+                }
+                else
+                {
+                    var input = await Console.In.ReadToEndAsync(cancellationToken);
+                    return ProcessTextWithFastPath(input, options);
+                }
+
+            }
+
             var compilationResult = RegexCompiler.Compile(options.Pattern);
             bool useDfa = ChooseStrategy(options.Strategy, compilationResult, options.FilePath);
 
@@ -33,6 +50,11 @@ namespace grep_sharp.RegEngine
             }
         }
 
+        private static bool IsSimpleLiteral(string pattern)
+        {
+            return !pattern.AsSpan().ContainsAny(".*+?[]{}()^$|\\");
+        }
+
         private static bool ChooseStrategy(string? strategyOption, CompilationResult compilation, string? filePath)
         {
             if (!string.IsNullOrEmpty(strategyOption))
@@ -52,6 +74,42 @@ namespace grep_sharp.RegEngine
                 filePath != null ? FileProcessor.EstimateLineCount(filePath) : null);
         }
 
+        private static async Task<int> ProcessFileWithFastPath(CommandLineOptions options,
+            CancellationToken cancellationToken)
+        {
+
+            if (!File.Exists(options.FilePath))
+            {
+                Console.Error.WriteLine($"File not found: {options.FilePath}");
+                return 1;
+            }
+
+            var result = await FileProcessor.ProcessFileWithFastPathAsync(
+                options.FilePath!, options.Pattern, options.ShowLineNumbers, options.CountOnly, cancellationToken);
+
+            if (options.CountOnly)
+            {
+                Console.WriteLine(result.MatchCount);
+            }
+            return result.Success ? 0 : 1;
+        }
+
+        private static int ProcessTextWithFastPath(string text, CommandLineOptions options)
+        {
+            bool isMatch = text.Contains(options.Pattern, StringComparison.Ordinal);
+
+            if (options.CountOnly)
+            {
+                Console.WriteLine(isMatch ? "1" : "0");
+            }
+            else if (isMatch)
+            {
+                Console.WriteLine(text);
+            }
+
+            return isMatch ? 0 : 1;
+        }
+
         private static async Task<int> ProcessFile(CommandLineOptions options,
             State pattern,
             bool useDfa,
@@ -66,9 +124,9 @@ namespace grep_sharp.RegEngine
             var result = await FileProcessor.ProcessFileAsync(
                 options.FilePath!, pattern, 
                 useDfa, options.ShowLineNumbers, 
-                options.CountOnly, options.Verbose, cancellationToken);
+                options.CountOnly, cancellationToken);
 
-            if (options.CountOnly && options.Verbose)
+            if (options.CountOnly)
             {
                 Console.WriteLine(result.MatchCount);
             }

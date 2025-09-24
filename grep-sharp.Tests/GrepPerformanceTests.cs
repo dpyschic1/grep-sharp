@@ -266,7 +266,7 @@ namespace grep_sharp.Tests
             };
 
             using var cts = new CancellationTokenSource();
-            cts.CancelAfter(TimeSpan.FromMilliseconds(100)); // Cancel after 100ms
+            cts.CancelAfter(TimeSpan.FromMilliseconds(100));
 
             try
             {
