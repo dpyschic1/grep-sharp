@@ -33,8 +33,8 @@ namespace grep_sharp.Compilation.NFAConstruction
                         fragStack.Push(BuildQuestion(fragStack.Pop()));
                         break;
                     case '[':
-                        int end = postFixPattern.IndexOf(']', i);
-                        var charSet = ParseCharacterClass(postFixPattern.Substring(i + 1, end - i - 1));
+                        int end = FindClosingBracket(postFixPattern, i);
+                        var charSet = ParseCharacterClass(postFixPattern, i + 1, end - 1);
                         fragStack.Push(BuildCharacterSet(charSet));
                         i = end;
                         break;
@@ -138,33 +138,38 @@ namespace grep_sharp.Compilation.NFAConstruction
             };
         }
 
-        private static CharacterSet ParseCharacterClass(string cClass)
+        private static CharacterSet ParseCharacterClass(string cClass, int start, int end)
         {
             var charSet = new CharacterSet();
+            int i = start;
 
-            bool isNegated = false;
-            int startIndex = 0;
-            if (cClass.Length > 0 && cClass[0] == '^')
+            if (end > i && cClass[i] == '^')
             {
-                isNegated = true;
-                startIndex = 1;
+                charSet.IsNegated = true;
+                i++;
             }
 
-            for (int i = startIndex; i < cClass.Length; i++)
+            while (i <= end)
             {
-                if (i + 2 < cClass.Length && cClass[i + 1] == '-')
+                if (i + 2 < end && cClass[i + 1] == '-')
                 {
                     if (cClass[i] < cClass[i + 2])
                     {
                         charSet.AddRange(cClass[i], cClass[i + 2]);
-                        i += 2;
+                        i += 3;
                     }
                 }
-                else charSet.Add(cClass[i]);
+                else charSet.Add(cClass[i++]);
             }
 
-            charSet.IsNegated = isNegated;
             return charSet;
+        }
+
+        private static int FindClosingBracket(string pattern, int start)
+        {
+            int i = start + 1;
+            while (i < pattern.Length && pattern[i] != ']') i++;
+            return i;
         }
     }
 }
