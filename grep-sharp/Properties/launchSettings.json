@@ -2,7 +2,7 @@
   "profiles": {
     "grep-sharp": {
       "commandName": "Project",
-      "commandLineArgs": "\"test\" some.txt"
+      "commandLineArgs": "\"de\" some.txt"
     }
   }
 }

@@ -2,7 +2,7 @@
 {
     public static class Constants
     {
-        public const char CONCAT = 'C';//(char)0xFFFF;
+        public const char CONCAT = (char)0xFFFF;
         public const char WILDCARD = (char)0xFFFE;
     }
 }

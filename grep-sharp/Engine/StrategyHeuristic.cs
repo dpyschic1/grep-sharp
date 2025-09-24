@@ -1,6 +1,6 @@
 ﻿using grep_sharp.Compilation;
 
-namespace grep_sharp.Core
+namespace grep_sharp.Engine
 {
     public static class StrategyHeuristic
     {

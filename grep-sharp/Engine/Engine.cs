@@ -3,7 +3,7 @@ using grep_sharp.Compilation;
 using grep_sharp.Compilation.NFAConstruction;
 using grep_sharp.Matcher;
 
-namespace grep_sharp.Core
+namespace grep_sharp.Engine
 {
     public static class Engine
     {

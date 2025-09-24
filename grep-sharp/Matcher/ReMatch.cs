@@ -1,5 +1,4 @@
 ﻿using grep_sharp.Compilation.NFAConstruction;
-using System.Collections.Generic;
 
 namespace grep_sharp.Matcher
 {
@@ -14,7 +13,7 @@ namespace grep_sharp.Matcher
 
             foreach( char c in input )
             {
-                current = GetNextState(current, c);
+                current = GetNextState(current, c, NFA);
                 if(current == null) return false;
             }
 
@@ -29,25 +28,24 @@ namespace grep_sharp.Matcher
 
             foreach (char c in input)
             {
-                Step(clist, nlist, c);
+                Step(clist, nlist, c, NFA);
                 (nlist, clist) = (clist, nlist);
             }
 
             foreach(var state in clist)
             {
-                Console.WriteLine($"State type: {state.Type}");
                 if (state.Type == StateType.Match) return true;
             }
 
             return false;
         }
 
-        private static DState? GetNextState(DState current, char c)
+        private static DState? GetNextState(DState current, char c, State startState)
         {
             if (current.Next[c] != null) return current.Next[c];
 
             var nextList = new List<State>();
-            Step(current.NFAStates, nextList, c);
+            Step(current.NFAStates, nextList, c, startState);
 
             if(nextList.Count == 0)
             {
@@ -61,21 +59,25 @@ namespace grep_sharp.Matcher
             return nextDState;
         }
 
-        private static void Step(List<State> clist, List<State> nlist, char c)
+        private static void Step(List<State> clist, List<State> nlist, char c, State startState)
         {
             listId++;
-            foreach(var state in clist)
+            AddState(nlist, startState);
+            foreach (var state in clist)
             {
                 switch (state.Type)
                 {
                     case StateType.Char:
-                        if (state.Character == c) AddState(nlist, state.Out1);
+                        if (state.Character == c) AddState(nlist, state.Out1); 
                         break;
-
                     case StateType.CharSet:
                         if (state.CharacterSet.Contains(c)) AddState(nlist, state.Out1);
                         break;
-                    default: break;
+                    case StateType.Match:
+                        AddState(nlist, state);
+                        break;
+                    default:
+                        break;
                 }
             }
         }
@@ -99,6 +101,7 @@ namespace grep_sharp.Matcher
                 AddState(list, state.Out2);
                 return;
             }
+
             list.Add(state);
         }
 

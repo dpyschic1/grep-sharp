@@ -12,10 +12,8 @@ namespace grep_sharp.Compilation
 
             if(ShouldExpand(tokens)) 
                 tokens = Tokenizer.ExpandQuantifierTokens(tokens);
-            foreach(var token in tokens) { Console.WriteLine(token); }
 
             var rpnOutExp = RPNConverter.InfixToPostfix(tokens);
-            Console.WriteLine("RPN Output for pattern `{0}` is `{1}`", pattern, rpnOutExp);
             var nfa =  NFABuilder.Build(rpnOutExp);
             return new CompilationResult(nfa, tokens);
         }
