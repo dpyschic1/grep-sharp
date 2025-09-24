@@ -5,6 +5,8 @@
         Char, 
         Split, 
         Match, 
-        CharSet 
+        CharSet,
+        AnchorStart,
+        AnchorEnd
     };
 }

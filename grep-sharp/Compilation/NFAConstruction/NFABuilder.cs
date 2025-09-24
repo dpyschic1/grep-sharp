@@ -20,6 +20,12 @@ namespace grep_sharp.Compilation.NFAConstruction
                     case CONCAT:
                         fragStack.Push(BuildConcatenation(fragStack.Pop(), fragStack.Pop()));
                         break;
+                    case ANCHORSTART:
+                        fragStack.Push(BuildAnchor(StateType.AnchorStart));
+                        break;
+                    case ANCHOREND:
+                        fragStack.Push(BuildAnchor(StateType.AnchorEnd));
+                        break;
                     case '+':
                         fragStack.Push(BuildPlus(fragStack.Pop()));
                         break;
@@ -122,6 +128,16 @@ namespace grep_sharp.Compilation.NFAConstruction
             };
         }
 
+        private static Fragement BuildAnchor(StateType type)
+        {
+            var anchorState = new State { Type = type };
+            return new Fragement
+            {
+                Start = anchorState,
+                DanglingAction = { target => anchorState.Out1 = target }
+            };
+        }
+
         private static CharacterSet ParseCharacterClass(string cClass)
         {
             var charSet = new CharacterSet();
@@ -147,6 +163,7 @@ namespace grep_sharp.Compilation.NFAConstruction
                 else charSet.Add(cClass[i]);
             }
 
+            charSet.IsNegated = isNegated;
             return charSet;
         }
     }

@@ -2,7 +2,7 @@
   "profiles": {
     "grep-sharp": {
       "commandName": "Project",
-      "commandLineArgs": "\"de\" some.txt"
+      "commandLineArgs": "\"[^@]+@[^@]+\\.[^@]+\" some.txt"
     }
   }
 }

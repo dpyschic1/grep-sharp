@@ -77,6 +77,26 @@ namespace grep_sharp.Compilation
                         for(; nalt > 0; nalt--) outBuff.Append('|');
                         break;
 
+                    case TokenType.AnchorStart:
+                        if (natom > 1)
+                        {
+                            natom--;
+                            outBuff.Append(CONCAT);
+                        }
+                        outBuff.Append(ANCHORSTART);
+                        natom++;
+                        break;
+
+                    case TokenType.AnchorEnd:
+                        if (natom > 1)
+                        {
+                            natom--;
+                            outBuff.Append(CONCAT);
+                        }
+                        outBuff.Append(ANCHOREND);
+                        natom++;
+                        break;
+
                     default: throw new NotImplementedException();
                 }
             }

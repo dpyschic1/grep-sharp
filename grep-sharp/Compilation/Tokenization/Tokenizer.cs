@@ -2,7 +2,6 @@
 {
     public static class Tokenizer
     {
-        //TODO handle anchors explicitly
         public static List<Token> Tokenize(string pattern)
         {
             int bStart = 0;
