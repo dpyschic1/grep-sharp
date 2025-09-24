@@ -1,5 +1,5 @@
 ﻿using grep_sharp.CommandLine;
-using grep_sharp.Core;
+using grep_sharp.RegEngine;
 
 namespace grep_sharp;
 
@@ -21,7 +21,6 @@ public static class Program
 
             using var cts = new CancellationTokenSource();
             SetupCancelHandler(cts);
-
             return await Engine.RunAsync(options, cts.Token);
         }
         catch (ArgumentException ex)

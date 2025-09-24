@@ -125,14 +125,17 @@ namespace grep_sharp.Compilation.NFAConstruction
         private static CharacterSet ParseCharacterClass(string cClass)
         {
             var charSet = new CharacterSet();
-            for (int i = 0; i < cClass.Length; i++)
-            {
-                if (cClass[0] == '^')
-                {
-                    charSet.IsNegated = true; 
-                    continue;
-                }
 
+            bool isNegated = false;
+            int startIndex = 0;
+            if (cClass.Length > 0 && cClass[0] == '^')
+            {
+                isNegated = true;
+                startIndex = 1;
+            }
+
+            for (int i = startIndex; i < cClass.Length; i++)
+            {
                 if (i + 2 < cClass.Length && cClass[i + 1] == '-')
                 {
                     if (cClass[i] < cClass[i + 2])

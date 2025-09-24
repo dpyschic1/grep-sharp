@@ -1,7 +1,7 @@
 ﻿using grep_sharp.Compilation.NFAConstruction;
 using grep_sharp.Matcher;
 
-namespace grep_sharp.Engine
+namespace grep_sharp.RegEngine
 {
     public static class FileProcessor
     {
