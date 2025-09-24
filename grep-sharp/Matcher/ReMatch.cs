@@ -34,9 +34,15 @@ namespace grep_sharp.Matcher
 
             StartList(clist, NFA);
 
+            //TODO: Optimize subexpression matching for better performance
             foreach (char c in input)
             {
+                foreach (var state in clist)
+                    if (state.Type == StateType.Match) return true;
+
                 Step(clist, nlist, c);
+                StartList(nlist, NFA);
+
                 (nlist, clist) = (clist, nlist);
                 nlist.Clear();
             }
