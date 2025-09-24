@@ -146,8 +146,8 @@ bool ShouldUseDFA(pattern, fileSize, lineCount) =>
 - ✅ Quantifiers `*`, `+`, `?`, `{n,m}`
 - ✅ Alternation `|`
 - ✅ Grouping `()`
-- ✅ Wildcards `.`
 - ✅ Anchors `^`, `$` (in development)
+- - ✅ Wildcards `.` (in development)
 - ❌ Subexpression extraction
 - ❌ Backreferences `\1`, `\2`
 - ❌ Lookahead/lookbehind `(?=...)`, `(?<!...)`
