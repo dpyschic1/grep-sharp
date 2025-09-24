@@ -1,5 +1,6 @@
 ﻿using grep_sharp.Compilation.NFAConstruction;
 using grep_sharp.Matcher;
+using System.Threading;
 
 namespace grep_sharp.RegEngine
 {
@@ -11,7 +12,6 @@ namespace grep_sharp.RegEngine
             bool useDfa,
             bool showLineNumbers,
             bool countOnly,
-            bool quiet,
             CancellationToken cancellationToken = default)
         {
             var result = new ProcessResult();
@@ -36,6 +36,40 @@ namespace grep_sharp.RegEngine
                     result.MatchCount++;
 
                     if (!countOnly)
+                    {
+                        if (showLineNumbers)
+                            Console.WriteLine($"{lineNumber}: {line}");
+                        else
+                            Console.WriteLine(line);
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        public static async Task<ProcessResult> ProcessFileWithFastPathAsync(
+            string filePath, 
+            string pattern,
+            bool showLineNumbers,
+            bool countOnly,
+            CancellationToken cancellationToken = default
+            )
+        {
+            var result = new ProcessResult();
+            using var reader = new StreamReader(filePath!);
+            string? line;
+            int lineNumber = 0;
+
+            while ((line = await reader.ReadLineAsync(cancellationToken)) != null)
+            {
+                lineNumber++;
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (line.Contains(pattern, StringComparison.Ordinal))
+                {
+                    result.MatchCount++;
+                    if (countOnly)
                     {
                         if (showLineNumbers)
                             Console.WriteLine($"{lineNumber}: {line}");
