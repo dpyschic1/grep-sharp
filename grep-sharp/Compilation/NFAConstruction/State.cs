@@ -7,6 +7,5 @@
         public CharacterSet? CharacterSet;
         public State? Out1;
         public State? Out2;
-        public int LastList;
     }
 }

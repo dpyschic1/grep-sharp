@@ -22,10 +22,7 @@ namespace grep_sharp.RegEngine
             if (complexity.HasAlternation || complexity.TokenCount > COMPLEX_PATTERN_THRESHOLD)
                 return false;
 
-            if (estimatedLines > 5 && !complexity.HasComplexFeatures)
-                return true;
-
-            return false;
+            return true;
         }
 
         public static string GetStrategyExplanation(CompilationResult compilation, int? estimatedLines)

@@ -4,16 +4,22 @@ namespace grep_sharp.Matcher
 {
     public static class ReMatch
     {
-        private static int listId = 0;
+        private static readonly Dictionary<State, int> _visited = [];
+        private static int _currentGeneration = 0;
+        private static readonly List<State> _list1 = [];
+        private static readonly List<State> _list2 = [];
 
         public static bool DFAMatch(string input, State NFA)
         {
-            var startList = StartList(NFA);
+            Initialize();
+            var startList = new List<State>();
+            StartList(startList, NFA);
+
             var current = DStateCache.GetOrCreate(startList);
 
             foreach( char c in input )
             {
-                current = GetNextState(current, c, NFA);
+                current = GetNextState(current, c);
                 if(current == null) return false;
             }
 
@@ -22,14 +28,17 @@ namespace grep_sharp.Matcher
 
         public static bool NFA2Match(string input, State NFA)
         {
-            listId = 0;
-            var clist = StartList(NFA);
-            var nlist = new List<State>();
+            Initialize();
+            var clist = _list1;
+            var nlist = _list2;
+
+            StartList(clist, NFA);
 
             foreach (char c in input)
             {
-                Step(clist, nlist, c, NFA);
+                Step(clist, nlist, c);
                 (nlist, clist) = (clist, nlist);
+                nlist.Clear();
             }
 
             foreach(var state in clist)
@@ -40,12 +49,12 @@ namespace grep_sharp.Matcher
             return false;
         }
 
-        private static DState? GetNextState(DState current, char c, State startState)
+        private static DState? GetNextState(DState current, char c)
         {
             if (current.Next[c] != null) return current.Next[c];
 
             var nextList = new List<State>();
-            Step(current.NFAStates, nextList, c, startState);
+            Step(current.NFAStates, nextList, c);
 
             if(nextList.Count == 0)
             {
@@ -59,10 +68,9 @@ namespace grep_sharp.Matcher
             return nextDState;
         }
 
-        private static void Step(List<State> clist, List<State> nlist, char c, State startState)
+        private static void Step(List<State> clist, List<State> nlist, char c)
         {
-            listId++;
-            AddState(nlist, startState);
+            _currentGeneration++;
             foreach (var state in clist)
             {
                 switch (state.Type)
@@ -73,28 +81,27 @@ namespace grep_sharp.Matcher
                     case StateType.CharSet:
                         if (state.CharacterSet.Contains(c)) AddState(nlist, state.Out1);
                         break;
-                    case StateType.Match:
-                        AddState(nlist, state);
-                        break;
                     default:
                         break;
                 }
             }
         }
 
-        private static List<State> StartList(State state)
+        private static void StartList(List<State> list, State state)
         {
-            listId++;
-            var stList = new List<State>();
-            AddState(stList, state);
-            return stList;
+            _currentGeneration++;
+            AddState(list, state);
         }
 
         private static void AddState(List<State> list, State state)
         {
-            if (list == null || state.LastList == listId) return;
+            if (state == null) return;
 
-            state.LastList = listId;
+            if (_visited.TryGetValue(state, out int lastGen) && lastGen == _currentGeneration)
+                return;
+
+            _visited[state] = _currentGeneration;
+
             if(state.Type == StateType.Split)
             {
                 AddState(list, state.Out1);
@@ -103,6 +110,14 @@ namespace grep_sharp.Matcher
             }
 
             list.Add(state);
+        }
+
+        private static void Initialize()
+        {
+            _visited.Clear();
+            _currentGeneration = 0;
+            _list1.Clear();
+            _list2.Clear();
         }
 
     }

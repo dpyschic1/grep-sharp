@@ -35,7 +35,7 @@ namespace grep_sharp.RegEngine
                 {
                     result.MatchCount++;
 
-                    if (!countOnly && !quiet)
+                    if (!countOnly)
                     {
                         if (showLineNumbers)
                             Console.WriteLine($"{lineNumber}: {line}");
@@ -53,7 +53,7 @@ namespace grep_sharp.RegEngine
             try
             {
                 var fileInfo = new FileInfo(filePath);
-                return (int)(fileInfo.Length / 100);
+                return (int)(fileInfo.Length / 60);
             }
             catch
             {
