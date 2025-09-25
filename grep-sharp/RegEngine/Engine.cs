@@ -2,16 +2,23 @@
 using grep_sharp.Compilation;
 using grep_sharp.Compilation.NFAConstruction;
 using grep_sharp.Matcher;
+using System.Buffers;
+using System.Text;
 
 namespace grep_sharp.RegEngine
 {
     public static class Engine
     {
+        private static readonly SearchValues<char> regChars = SearchValues.Create(".*+?[]{}()^$|");
+        private static readonly SearchValues<char> escapeChars = SearchValues.Create("dDwWsS");
+
         public static async Task<int> RunAsync(CommandLineOptions options,
             CancellationToken cancellationToken = default)
         {
-            if (IsSimpleLiteral(options.Pattern))
+            if (TryGetSimpleLiteral(options.Pattern, out var escapedPattern))
             {
+                options.Pattern = escapedPattern;
+
                 if(options.Verbose)
                     Console.Error.WriteLine("Strategy: Fast path (literal string matching)");
 
@@ -50,9 +57,37 @@ namespace grep_sharp.RegEngine
             }
         }
 
-        private static bool IsSimpleLiteral(string pattern)
+        private static bool TryGetSimpleLiteral(string pattern, out string escaped)
         {
-            return !pattern.AsSpan().ContainsAny(".*+?[]{}()^$|\\");
+            escaped = string.Empty;
+
+            var sb = new StringBuilder(pattern.Length);
+
+            for(int i = 0; i < pattern.Length; i++)
+            {
+                char c = pattern[i];
+
+                if(c == '\\')
+                {
+                    if (i + 1 >= pattern.Length) return false;
+
+                    char next = pattern[++i];
+
+                    if (escapeChars.Contains(next))
+                        return false;
+                    else
+                        sb.Append(next);
+                }
+                else
+                {
+                    if(regChars.Contains(c)) return false;
+
+                    sb.Append(c);
+                }
+            }
+
+            escaped = sb.ToString();
+            return true;
         }
 
         private static bool ChooseStrategy(string? strategyOption, CompilationResult compilation, string? filePath)
